@@ -1,4 +1,5 @@
 DATA_FOLDER = 'data'
+RESULTS_FOLDER = 'results'
 
 # The files below should be inside a folder named 'data'
 NORMAL_FASTQ_FILE_LIST = ['PA221MH-lib09-P19-Norm_S1_L001_R1_001.fastq.gz','PA221MH-lib09-P19-Norm_S1_L001_R2_001.fastq.gz']
