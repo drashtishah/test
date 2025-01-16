@@ -4,3 +4,5 @@ seaborn
 pyarrow
 matplotlib
 scipy
+nbformat
+nbconvert
