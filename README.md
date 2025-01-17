@@ -4,6 +4,7 @@ Research often includes simple modifications on different datasets and a ton of 
 
 ## Setup before running the analysis
 - The code uses FastQC, Samtools, Bamtools, BWA, and GATK4.
+- It is recommended that you run jupyter lab from a conda environment (not base). Samtools might not work if run from base environment.
 - You can run "make install" in the terminal to install the required Python packages.
 - Make sure that all the data is in a folder called 'data'. This folder must be in the same directory as 'data_analysis' and 'ngs' Jupyter notebooks. Ensure that the filenames you used match those in the 'config.py' file.
 
@@ -19,4 +20,3 @@ If you do not want to use the terminal, you can manually open the following file
 
 ## Applicant's note
 - This is a simple template. The template can be extended to help researchers automate and validate workflows. 
-- The analysis takes a long time on my local machine, so I have included what the notebooks with charts look like in the 'docs' folder.

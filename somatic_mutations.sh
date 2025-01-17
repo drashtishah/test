@@ -6,8 +6,8 @@ set -e
 # Number of threads to use
 THREADS=4
 
-if [ $# -lt 5 ]; then
-    echo "Usage: $0 NORMAL_R1 NORMAL_R2 TUMOR_R1 TUMOR_R2 REFERENCE_FA OUTPUT_DIR"
+if [ $# -lt 7 ]; then
+    echo "Usage: $0 NORMAL_R1 NORMAL_R2 TUMOR_R1 TUMOR_R2 REFERENCE_FA OUTPUT_DIR INPUT_DIR"
     exit 1
 fi
 
@@ -20,6 +20,7 @@ TUMOR_FASTQ_R1=$3
 TUMOR_FASTQ_R2=$4
 REFERENCE_FA=$5
 OUTPUT_DIR=$6
+INPUT_DIR=$7
 
 # Index the reference genome
 bwa index $REFERENCE_FA
@@ -34,19 +35,16 @@ process_sample() {
   FASTQ_R1=$2
   FASTQ_R2=$3
 
-  # Step 4: Alignment
-
   echo "Aligning reads for $SAMPLE_NAME sample"
-
+  
   bwa mem -t $THREADS -R "@RG\tID:$SAMPLE_NAME\tSM:$SAMPLE_NAME\tPL:ILLUMINA" $REFERENCE_FA \
-    $OUTPUT_DIR/${SAMPLE_NAME}_R1_trimmed.fastq.gz $OUTPUT_DIR/${SAMPLE_NAME}_R2_trimmed.fastq.gz | \
-    samtools view -Sb - > $OUTPUT_DIR/${SAMPLE_NAME}_aligned.bam
+    $FASTQ_R1 $FASTQ_R2 > $OUTPUT_DIR/${SAMPLE_NAME}_aligned.sam
+    
+  samtools view -Sb $OUTPUT_DIR/${SAMPLE_NAME}_aligned.sam > $OUTPUT_DIR/${SAMPLE_NAME}_aligned.bam
 
-  # Step 5: Sorting
   echo "Sorting BAM file"
   samtools sort -@ $THREADS -o $OUTPUT_DIR/${SAMPLE_NAME}_sorted.bam $OUTPUT_DIR/${SAMPLE_NAME}_aligned.bam
 
-  # Step 6: Marking Duplicates
   echo "Marking duplicates"
 
   gatk MarkDuplicates \
@@ -54,7 +52,6 @@ process_sample() {
     -O $OUTPUT_DIR/${SAMPLE_NAME}_dedup.bam \
     -M $OUTPUT_DIR/${SAMPLE_NAME}_dedup_metrics.txt
 
-  # Step 7: Indexing BAM
   echo "Indexing BAM file"
   samtools index $OUTPUT_DIR/${SAMPLE_NAME}_dedup.bam
 
@@ -67,9 +64,30 @@ process_sample $NORMAL_SAMPLE_NAME $NORMAL_FASTQ_R1 $NORMAL_FASTQ_R2
 # Process Tumor Sample
 process_sample $TUMOR_SAMPLE_NAME $TUMOR_FASTQ_R1 $TUMOR_FASTQ_R2
 
-# Step 8: Somatic Variant Calling with Mutect2
+# echo "Calculating contamination"
+
+# gatk GetPileupSummaries \
+#   -I $OUTPUT_DIR/${TUMOR_SAMPLE_NAME}_dedup.bam \
+#   -V $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
+#   -L $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
+#   -O $OUTPUT_DIR/tumor_pileups.table
+
+# gatk GetPileupSummaries \
+#   -I $OUTPUT_DIR/${NORMAL_SAMPLE_NAME}_dedup.bam \
+#   -V $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
+#   -L $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
+#   -O $OUTPUT_DIR/normal_pileups.table
+
+# gatk CalculateContamination \
+#   -I $OUTPUT_DIR/tumor_pileups.table \
+#   -matched $OUTPUT_DIR/normal_pileups.table \
+#   -O $OUTPUT_DIR/contamination.table \
+#   --tumor-segmentation $OUTPUT_DIR/tumor_segments.table
+
 
 echo "Running Mutect2 for somatic variant calling"
+#--contamination-table $OUTPUT_DIR/contamination.table \
+#--germline-resource $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
 
 gatk Mutect2 \
   -R $REFERENCE_FA \
@@ -77,7 +95,6 @@ gatk Mutect2 \
   -I $OUTPUT_DIR/${NORMAL_SAMPLE_NAME}_dedup.bam -normal $NORMAL_SAMPLE_NAME \
   -O $OUTPUT_DIR/unfiltered_variants.vcf.gz
  
-# Step 9: Filtering Mutect2 Calls
 echo "Filtering Mutect2 calls"
 
 gatk FilterMutectCalls \
@@ -85,4 +102,4 @@ gatk FilterMutectCalls \
   -R $REFERENCE_FA \
   -O $OUTPUT_DIR/filtered_variants.vcf.gz
 
-echo "Somatic variant calling pipeline completed. Results are in $OUTPUT_DIR"
+echo "Somatic variant calling pipeline completed. Results are in $OUTPUT_DIR folder."
