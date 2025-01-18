@@ -16,4 +16,3 @@ NUMBER_OF_CPG_SITES = 3
 QC = False # If True, FastQC reports will be generated
 RUN_GATK = False
 DOWNLOAD_REF_GENOME = False # hg38.fa
-DOWNLOAD_GERMLINE_RESOURCE = False # af-only-gnomad.hg38.vcf.gz

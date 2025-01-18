@@ -64,30 +64,7 @@ process_sample $NORMAL_SAMPLE_NAME $NORMAL_FASTQ_R1 $NORMAL_FASTQ_R2
 # Process Tumor Sample
 process_sample $TUMOR_SAMPLE_NAME $TUMOR_FASTQ_R1 $TUMOR_FASTQ_R2
 
-# echo "Calculating contamination"
-
-# gatk GetPileupSummaries \
-#   -I $OUTPUT_DIR/${TUMOR_SAMPLE_NAME}_dedup.bam \
-#   -V $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
-#   -L $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
-#   -O $OUTPUT_DIR/tumor_pileups.table
-
-# gatk GetPileupSummaries \
-#   -I $OUTPUT_DIR/${NORMAL_SAMPLE_NAME}_dedup.bam \
-#   -V $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
-#   -L $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
-#   -O $OUTPUT_DIR/normal_pileups.table
-
-# gatk CalculateContamination \
-#   -I $OUTPUT_DIR/tumor_pileups.table \
-#   -matched $OUTPUT_DIR/normal_pileups.table \
-#   -O $OUTPUT_DIR/contamination.table \
-#   --tumor-segmentation $OUTPUT_DIR/tumor_segments.table
-
-
 echo "Running Mutect2 for somatic variant calling"
-#--contamination-table $OUTPUT_DIR/contamination.table \
-#--germline-resource $INPUT_DIR/af-only-gnomad.hg38.vcf.gz \
 
 gatk Mutect2 \
   -R $REFERENCE_FA \
